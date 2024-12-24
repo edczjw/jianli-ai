@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简历分析系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@heroicons/react@1.0.6/outline.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f3f4f6;
+            min-height: 100vh;
+        }
+        
+        .loading {
+            display: none;
+        }
+        .loading.active {
+            display: block;
+        }
+        .preview-container {
+            max-height: 500px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .preview-container img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(45deg, #2563eb, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .upload-box {
+            border: 2px dashed #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-box:hover {
+            border-color: #3b82f6;
+        }
+        
+        .score-card {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-12">
+        <h1 class="text-4xl font-bold text-center mb-2 gradient-text">简历分析系统</h1>
+        <p class="text-center text-gray-600 mb-8">专业的简历分析和建议优化工具</p>
+        
+        <!-- 上传表单 -->
+        <div class="max-w-xl mx-auto bg-white rounded-lg shadow-lg p-8 mb-8">
+            <form id="uploadForm" class="space-y-4">
+                <div class="space-y-2">
+                    <label class="block text-lg font-medium text-gray-800">
+                        选择简历文件
+                    </label>
+                    <div class="text-sm text-gray-600 space-y-1 mb-4">
+                        支持的格式：
+                        <div class="flex flex-wrap gap-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                图片格式
+                            </span>
+                            <span class="text-gray-500">PNG, JPG, JPEG, WEBP, BMP</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                文档格式
+                            </span>
+                            <span class="text-gray-500">PDF, DOC, DOCX</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                文本格式
+                            </span>
+                            <span class="text-gray-500">TXT, RTF</span>
+                        </div>
+                        <br>
+                        <div class="flex items-center gap-2 text-gray-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            文件大小限制：10MB
+                        </div>
+                        <br>
+                        <div class="flex items-center gap-2 text-orange-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            提示：上传图片时，请确保图片清晰、文字可见、方向正确
+                        </div>
+                    </div>
+                    <div class="upload-box rounded-lg p-6 text-center">
+                        <input type="file" name="file" 
+                               accept=".png,.jpg,.jpeg,.webp,.bmp,.pdf,.doc,.docx,.txt,.rtf"
+                               class="hidden"
+                               id="file-input"
+                               onchange="previewFile(this)">
+                        <label for="file-input" class="cursor-pointer">
+                            <div class="space-y-2">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="text-sm text-gray-600">
+                                    点击或拖拽文件到此处上传
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 预览区域 -->
+                <div id="previewContainer" class="preview-container hidden">
+                    <h3 class="text-lg font-medium mb-4 text-gray-800">文件预览</h3>
+                    <div class="rounded-lg p-4 bg-gray-50">
+                        <img id="preview" src="" alt="简历预览" class="w-full">
+                    </div>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform transition-all duration-200 hover:scale-[1.02]">
+                    开始分析
+                </button>
+            </form>
+        </div>
+
+        <!-- 加载动画 -->
+        <div id="loading" class="loading text-center mb-6">
+            <div class="flex items-center justify-center space-x-2">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+                <p class="text-gray-600">正在分析中...</p>
+            </div>
+        </div>
+
+        <!-- 分析结果 -->
+        <div id="result" class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8 hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">分析结果</h2>
+            <div class="space-y-4">
+                <div class="score-card rounded-lg p-6 mb-8">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-semibold">总体评分</h3>
+                            <p class="text-blue-100 mt-1">基于各项指标的综合评估</p>
+                        </div>
+                        <div class="text-4xl font-bold" id="scoreValue">0分</div>
+                    </div>
+                </div>
+                
+                <div id="sectionsResult" class="space-y-6">
+                    <!-- 各部分分析结果将在这里动态插入 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 文件预览功能
+        function previewFile(input) {
+            const preview = document.getElementById('preview');
+            const previewContainer = document.getElementById('previewContainer');
+            const file = input.files[0];
+            
+            if (file) {
+                // 获取文件扩展名
+                const extension = file.name.split('.').pop().toLowerCase();
+                
+                // 如果是图片文件
+                if (['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(extension)) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                        if (document.querySelector('iframe')) {
+                            document.querySelector('iframe').remove();
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                }
+                // 如果是PDF文件
+                else if (extension === 'pdf') {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.style.display = 'none';
+                        if (document.querySelector('iframe')) {
+                            document.querySelector('iframe').remove();
+                        }
+                        const iframe = document.createElement('iframe');
+                        iframe.src = e.target.result;
+                        iframe.style.width = '100%';
+                        iframe.style.height = '500px';
+                        previewContainer.appendChild(iframe);
+                    }
+                    reader.readAsDataURL(file);
+                }
+                // 如果是文档或文本文件
+                else {
+                    preview.style.display = 'none';
+                    if (document.querySelector('iframe')) {
+                        document.querySelector('iframe').remove();
+                    }
+                    const div = document.createElement('div');
+                    div.className = 'p-4 bg-gray-100 rounded';
+                    div.textContent = `文件名: ${file.name} (${(file.size/1024/1024).toFixed(2)}MB)`;
+                    previewContainer.appendChild(div);
+                }
+                previewContainer.classList.remove('hidden');
+            } else {
+                preview.src = '';
+                previewContainer.classList.add('hidden');
+                if (document.querySelector('iframe')) {
+                    document.querySelector('iframe').remove();
+                }
+            }
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            // 显示加载动画
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('result').classList.add('hidden');
+            
+            // 保持预览可见
+            document.getElementById('previewContainer').classList.remove('hidden');
+            
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(data);
+                } else {
+                    alert(data.error || '分析失败，请重试');
+                }
+            } catch (error) {
+                alert('发生错误，请重试');
+                console.error(error);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        });
+
+        function showResult(data) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.classList.remove('hidden');
+            
+            const sectionsDiv = document.getElementById('sectionsResult');
+            sectionsDiv.innerHTML = '';
+            
+            // 检查是否有错误信息
+            if (data.sections && data.sections['错误信息']) {
+                const errorSection = data.sections['错误信息'];
+                const errorHtml = `
+                    <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">处理出错</h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    <p>${errorSection.content}</p>
+                                    ${errorSection.suggestions.map(s => `<p class="mt-1">• ${s}</p>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                sectionsDiv.innerHTML = errorHtml;
+                return;
+            }
+            
+            // 添加总分显示
+            if (data.overall_score) {
+                const overallScoreHtml = `
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-lg font-medium text-blue-800">总体评分</h3>
+                                <p class="text-xl font-bold text-blue-600">${Math.round(data.overall_score)}分</p>
+                            </div>
+                        </div>
+                    </div>`;
+                sectionsDiv.innerHTML = overallScoreHtml;
+            }
+            
+            for (const [name, section] of Object.entries(data.sections)) {
+                // 跳过错误信息部分
+                if (name === '错误信息') continue;
+                
+                const sectionHtml = `
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <h3 class="text-lg font-medium mb-2">${name}</h3>
+                        
+                        <!-- 内容展示 -->
+                        <div class="bg-gray-50 p-4 rounded mb-4 whitespace-pre-wrap text-gray-700">
+                            ${section.content}
+                        </div>
+                        
+                        <!-- 分数展示 -->
+                        <div class="flex items-center mb-3">
+                            <div class="flex-1 bg-gray-200 rounded-full h-3">
+                                <div class="bg-blue-500 rounded-full h-3" 
+                                     style="width: ${section.score}%"></div>
+                            </div>
+                            <span class="ml-4">${Math.round(section.score)}分</span>
+                        </div>
+                        
+                        <!-- 建议展示 -->
+                        <div class="space-y-2 mt-4">
+                            <h4 class="font-medium text-gray-700">改进建议：</h4>
+                            ${section.suggestions.map(s => `
+                                <p class="text-gray-600 pl-4 border-l-2 border-blue-200">• ${s}</p>
+                            `).join('')}
+                        </div>
+                        
+                        <!-- 亮点展示 -->
+                        ${section.highlights && section.highlights.length > 0 ? `
+                            <div class="space-y-2 mt-4">
+                                <h4 class="font-medium text-gray-700">亮点分析：</h4>
+                                ${section.highlights.map(h => `
+                                    <p class="text-gray-600 pl-4 border-l-2 border-green-200">• ${h}</p>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                sectionsDiv.innerHTML += sectionHtml;
+            }
+        }
+    </script>
+</body>
+</html> 
